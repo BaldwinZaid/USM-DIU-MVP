@@ -1,0 +1,10 @@
+export function ReservationHistory({ consumption = false }: { consumption?: boolean }) {
+  const columns = consumption ? ["N°", "Fecha", "Hora", "Tipo consumo", "Campus/Sede consumo", "Comedor", "Menú"] : ["Acción", "Fecha registro", "Código reserva", "Fecha desde", "Fecha hasta", "Menú", "Campus/Sede reserva"]
+  return <section className="rounded-b-[3px] border border-[#ddd] px-4 pb-[42px] pt-8 text-sm">
+    <div className="mb-7 grid gap-6 md:grid-cols-[27%_1fr] md:pr-9">
+      <div className="text-center"><h2 className="mb-2 font-semibold text-[#404856]">Disponibles</h2><div className="flex justify-center gap-[3px]">{["Almuerzos", "Cenas"].map(label => <div key={label} className="flex h-[76px] w-[90px] flex-col justify-center rounded-[5px] border border-[#bee5eb] bg-[#d1ecf1] text-[#0c5460] shadow-[0_1px_9px_#0002]"><span className="text-xs">{label}</span><strong className="text-2xl leading-7">0</strong></div>)}</div></div>
+      <div className={`min-h-[123px] rounded-[3px] border border-[#bee5eb] bg-[#d1ecf1] px-[18px] py-3 leading-[21px] text-[#0c5460] ${consumption ? "text-center" : ""}`}><strong>Información</strong>{consumption ? <p>Se muestran los consumos de los últimos <strong>90</strong> días.</p> : <><p>- El plazo para anular una reserva, es hasta las 16:00 horas del día anterior a su consumo, si la reserva tiene días consumidos, la fecha de término será actualizada.</p><p>- Si anula una reserva, puede volver a generarla en pestaña reserva de menú.</p></>}</div>
+    </div>
+    <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse text-center"><caption className="sr-only">{consumption ? "Mis consumos" : "Mis reservas"}</caption><thead><tr>{columns.map(col => <th scope="col" className="border border-[#d9dfe7] px-4 py-[10px] font-bold" key={col}>{col}</th>)}</tr></thead><tbody><tr><td colSpan={7} className="border border-[#d9dfe7] py-2">{consumption ? "No cuenta con información de consumo." : "No existen solicitudes"}</td></tr></tbody></table></div>
+  </section>
+}

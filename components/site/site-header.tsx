@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { TopBar } from "./top-bar"
 
 export function SiteHeader() {
@@ -13,12 +14,12 @@ export function SiteHeader() {
             className="h-14 w-auto"
           />
         </a>
-        <button
-          type="button"
-          className="h-8 w-full rounded bg-primary text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-[272px]"
+        <Link
+          href="/solicitud"
+          className="flex h-8 w-full items-center justify-center rounded bg-primary text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-[272px]"
         >
           Acceso
-        </button>
+        </Link>
       </div>
     </header>
   )
