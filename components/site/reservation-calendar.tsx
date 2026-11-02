@@ -1,47 +1,84 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
-export type DateRange = { from: Date; to: Date }
-export const formatDate = (date: Date) => `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`
 
-export function ReservationCalendar({ value, onChange }: { value?: DateRange; onChange: (range: DateRange) => void }) {
-  const [month, setMonth] = useState(() => new Date(2026, 10, 1))
-  const [start, setStart] = useState<Date>()
-  const root = useRef<HTMLDetailsElement>(null)
-  const trigger = useRef<HTMLElement>(null)
-  function closeCalendar() {
-    if (root.current) root.current.open = false
-    setStart(undefined)
-  }
-  useEffect(() => {
-    const close = (event: PointerEvent) => {
-      if (root.current && !root.current.contains(event.target as Node)) {
-        root.current.open = false
-        setStart(undefined)
-      }
-    }
-    document.addEventListener("pointerdown", close)
-    return () => document.removeEventListener("pointerdown", close)
-  }, [])
-  function choose(date: Date) {
-    if (!start) { setStart(date); return }
-    onChange(date < start ? { from: date, to: start } : { from: start, to: date }); closeCalendar(); trigger.current?.focus()
-  }
-  return <details ref={root} className="relative min-w-0" onKeyDown={e => { if (e.key === "Escape") { closeCalendar(); trigger.current?.focus() } }}>
-    <summary ref={trigger} id="dates" aria-label="Fechas a incluir" className="flex h-[34px] w-full cursor-pointer list-none items-center justify-between border border-[#cbd3dc] bg-[#e9ecef] px-3 text-left text-sm focus:outline-none focus:ring-[3px] focus:ring-[#b3d7ff] [&::-webkit-details-marker]:hidden"><span>{value ? `${formatDate(value.from)} - ${formatDate(value.to)}` : "Seleccione fechas…"}</span><span aria-hidden="true">▾</span></summary>
-    <div role="dialog" aria-label="Seleccionar fechas" className="absolute left-0 top-[40px] z-50 flex w-[486px] max-w-[calc(100vw-64px)] flex-wrap rounded-[3px] border border-[#ddd] bg-white p-[10px] shadow-sm sm:flex-nowrap" style={{ fontFamily: "Arial, sans-serif" }}>
-      {[0, 1].map(offset => {
-        const current = new Date(month.getFullYear(), month.getMonth() + offset, 1)
-        const first = (current.getDay() + 6) % 7
-        return <div key={offset} className="w-full min-w-0 sm:w-1/2">
-          <div className="flex h-7 items-center justify-between px-2 text-xs font-bold"><button type="button" aria-label={offset ? "Mes siguiente" : "Mes anterior"} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + (offset ? 1 : -1), 1))} className={offset ? "order-2" : ""}>{offset ? "›" : "‹"}</button><span className="mx-auto capitalize">{current.toLocaleDateString("es-CL", { month: "long", year: "numeric" }).replace(" de ", " ")}</span></div>
-          <div className="grid grid-cols-7 text-center text-xs">{["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map(d => <span key={d} className="py-2 font-bold">{d}</span>)}{Array.from({ length: 42 }, (_, index) => {
-            const day = new Date(current.getFullYear(), current.getMonth(), index - first + 1)
-            const disabled = day.getMonth() !== current.getMonth() || [0, 6].includes(day.getDay()) || day < new Date(2026, 10, 3)
-            const selected = start ? +day === +start : value && day >= value.from && day <= value.to
-            return <button key={index} type="button" disabled={disabled} aria-label={formatDate(day)} aria-pressed={!!selected} onClick={() => choose(day)} className={`h-[27px] text-xs ${disabled ? "text-[#999] line-through" : selected ? "bg-[#357ebd] text-white" : "hover:bg-[#eee]"}`}>{day.getDate()}</button>
-          })}</div>
-        </div>
-      })}
+import { es } from "react-day-picker/locale"
+import { XIcon } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Badge } from "@/components/ui/badge"
+import { dateKey, formatShortDate } from "@/lib/menu-data"
+
+export const formatDate = (date: Date) =>
+  `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`
+
+export const FIRST_BOOKABLE_DAY = new Date(2026, 10, 3)
+
+type Props = {
+  selected: Date[]
+  onSelectedChange: (dates: Date[]) => void
+  onDayClick: (date: Date, nowSelected: boolean) => void
+  onPreview: (date?: Date) => void
+}
+
+export function ReservationCalendar({ selected, onSelectedChange, onDayClick, onPreview }: Props) {
+  const sorted = [...selected].sort((a, b) => +a - +b)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div
+        className="rounded-lg border border-[#d9dfe7] bg-white p-2 shadow-sm"
+        onMouseLeave={() => onPreview(undefined)}
+        onBlur={e => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onPreview(undefined)
+        }}
+      >
+        <Calendar
+          mode="multiple"
+          locale={es}
+          weekStartsOn={1}
+          defaultMonth={FIRST_BOOKABLE_DAY}
+          startMonth={new Date(2026, 10, 1)}
+          endMonth={new Date(2027, 0, 1)}
+          selected={selected}
+          onSelect={dates => onSelectedChange(dates ?? [])}
+          onDayClick={(date, modifiers) => {
+            if (!modifiers.disabled) onDayClick(date, !modifiers.selected)
+          }}
+          onDayMouseEnter={(date, modifiers) => {
+            if (!modifiers.disabled && !modifiers.outside) onPreview(date)
+          }}
+          onDayFocus={(date, modifiers) => {
+            if (!modifiers.disabled) onPreview(date)
+          }}
+          disabled={[{ before: FIRST_BOOKABLE_DAY }, { dayOfWeek: [0, 6] }]}
+          showOutsideDays={false}
+          className="w-full bg-transparent [--cell-size:--spacing(10)]"
+          classNames={{ root: "w-full", month: "flex w-full flex-col gap-4", caption_label: "text-sm font-semibold capitalize text-[#003a5d]" }}
+        />
+      </div>
+
+      <div aria-live="polite">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#5b6675]">
+          {sorted.length ? `${sorted.length} ${sorted.length === 1 ? "día seleccionado" : "días seleccionados"}` : "Sin días seleccionados"}
+        </p>
+        {sorted.length > 0 && (
+          <ul className="flex flex-wrap gap-2">
+            {sorted.map(date => (
+              <li key={dateKey(date)}>
+                <Badge className="h-7 gap-1 rounded-full bg-[#e6f0f7] pl-3 pr-1 text-xs font-medium capitalize text-[#003a5d]">
+                  {formatShortDate(date)}
+                  <button
+                    type="button"
+                    aria-label={`Quitar ${formatShortDate(date)}`}
+                    onClick={() => onSelectedChange(selected.filter(d => dateKey(d) !== dateKey(date)))}
+                    className="flex size-5 items-center justify-center rounded-full text-[#003a5d] hover:bg-[#005e90] hover:text-white focus-visible:outline-2 focus-visible:outline-[#005e90]"
+                  >
+                    <XIcon className="size-3" aria-hidden="true" />
+                  </button>
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
-  </details>
+  )
 }
