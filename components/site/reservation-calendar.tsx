@@ -19,7 +19,7 @@ export function ReservationCalendar({ value, onChange }: { value?: DateRange; on
     onChange(date < start ? { from: date, to: start } : { from: start, to: date }); setStart(undefined); setOpen(false)
   }
   return <div ref={root} className="relative" onKeyDown={e => { if (e.key === "Escape") { setOpen(false); setStart(undefined) } }}>
-    <button id="dates" type="button" aria-haspopup="dialog" aria-expanded={open} aria-label="Fechas a incluir" onClick={() => { setOpen(!open); setStart(undefined) }} className="h-[34px] w-full border border-[#cbd3dc] bg-[#e9ecef] px-3 text-left text-sm focus:outline-none focus:ring-[3px] focus:ring-[#b3d7ff]">{value ? `${formatDate(value.from)} - ${formatDate(value.to)}` : ""}</button>
+    <button id="dates" type="button" aria-haspopup="dialog" aria-expanded={open} aria-label="Fechas a incluir" onClick={() => { if (!open) { setStart(undefined); setOpen(true) } }} className="h-[34px] w-full cursor-pointer border border-[#cbd3dc] bg-[#e9ecef] px-3 text-left text-sm focus:outline-none focus:ring-[3px] focus:ring-[#b3d7ff]">{value ? `${formatDate(value.from)} - ${formatDate(value.to)}` : <span className="text-[#626b76]">Seleccione fechas…</span>}</button>
     {open && <div role="dialog" aria-label="Seleccionar fechas" className="absolute left-0 top-[40px] z-30 flex w-[486px] max-w-[calc(100vw-64px)] flex-wrap rounded-[3px] border border-[#ddd] bg-white p-[10px] shadow-sm sm:flex-nowrap" style={{ fontFamily: "Arial, sans-serif" }}>
       {[0, 1].map(offset => {
         const current = new Date(month.getFullYear(), month.getMonth() + offset, 1)
