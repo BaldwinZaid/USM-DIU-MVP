@@ -31,6 +31,8 @@ export function ReservationCalendar({ selected, onSelectedChange, onDayClick, on
         }}
       >
         <Calendar
+          aria-label="Fechas a incluir en la reserva"
+          aria-describedby="date-selection-help"
           mode="multiple"
           locale={es}
           weekStartsOn={1}
@@ -50,7 +52,7 @@ export function ReservationCalendar({ selected, onSelectedChange, onDayClick, on
           }}
           disabled={[{ before: FIRST_BOOKABLE_DAY }, { dayOfWeek: [0, 6] }]}
           showOutsideDays={false}
-          className="w-full bg-transparent [--cell-size:--spacing(10)]"
+          className="w-full bg-transparent [--cell-size:--spacing(10)] [&_button[data-selected-single=true]]:bg-primary [&_button[data-selected-single=true]]:text-primary-foreground [&_button[data-selected-single=true]:hover]:bg-primary [&_button[data-selected-single=true]:hover]:text-primary-foreground"
           classNames={{ root: "w-full", month: "flex w-full flex-col gap-4", caption_label: "text-sm font-semibold capitalize text-[#003a5d]" }}
         />
       </div>
@@ -59,8 +61,9 @@ export function ReservationCalendar({ selected, onSelectedChange, onDayClick, on
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#5b6675]">
           {sorted.length ? `${sorted.length} ${sorted.length === 1 ? "día seleccionado" : "días seleccionados"}` : "Sin días seleccionados"}
         </p>
+        {sorted.length === 0 && <p className="text-xs text-[#5b6675]">Los días que elijas aparecerán aquí como etiquetas que puedes quitar.</p>}
         {sorted.length > 0 && (
-          <ul className="flex flex-wrap gap-2">
+          <ul aria-label="Fechas seleccionadas" className="flex flex-wrap gap-2">
             {sorted.map(date => (
               <li key={dateKey(date)}>
                 <Badge className="h-7 gap-1 rounded-full bg-[#e6f0f7] pl-3 pr-1 text-xs font-medium capitalize text-[#003a5d]">

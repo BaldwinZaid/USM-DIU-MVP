@@ -57,7 +57,7 @@ export function ReservationForm({ onReserve }: { onReserve: (reservation: DemoRe
         <div className="mt-8 flex items-center justify-between gap-3 border-b border-[#d9dfe7] pb-3">
           <div>
             <h2 className="text-base font-semibold text-[#003a5d]">Fechas a incluir</h2>
-            <p className="text-xs text-[#5b6675]">Haz clic en los días que necesites. Pueden ser días sueltos y no consecutivos.</p>
+            <p id="date-selection-help" className="text-xs text-[#5b6675]">Selecciona días sueltos, por ejemplo, los martes y jueves. Pulsa de nuevo un día o la X de su etiqueta para quitarlo.</p>
           </div>
           <button type="button" aria-label="Mostrar ayuda de fechas" aria-expanded={help} onClick={() => setHelp(!help)} className="flex h-[34px] w-[37px] shrink-0 items-center justify-center rounded-[3px] bg-[#005087] text-white hover:bg-[#003e69]"><span aria-hidden="true" className="inline-flex size-[14px] items-center justify-center rounded-full border border-white text-[10px] font-bold">?</span></button>
         </div>
