@@ -4,23 +4,31 @@ export type DateRange = { from: Date; to: Date }
 export const formatDate = (date: Date) => `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`
 
 export function ReservationCalendar({ value, onChange }: { value?: DateRange; onChange: (range: DateRange) => void }) {
-  const [open, setOpen] = useState(false)
   const [month, setMonth] = useState(() => new Date(2026, 10, 1))
   const [start, setStart] = useState<Date>()
-  const root = useRef<HTMLDivElement>(null)
+  const root = useRef<HTMLDetailsElement>(null)
+  const trigger = useRef<HTMLElement>(null)
+  function closeCalendar() {
+    if (root.current) root.current.open = false
+    setStart(undefined)
+  }
   useEffect(() => {
-    if (!open) return
-    const close = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false) }
+    const close = (event: PointerEvent) => {
+      if (root.current && !root.current.contains(event.target as Node)) {
+        root.current.open = false
+        setStart(undefined)
+      }
+    }
     document.addEventListener("pointerdown", close)
     return () => document.removeEventListener("pointerdown", close)
-  }, [open])
+  }, [])
   function choose(date: Date) {
     if (!start) { setStart(date); return }
-    onChange(date < start ? { from: date, to: start } : { from: start, to: date }); setStart(undefined); setOpen(false)
+    onChange(date < start ? { from: date, to: start } : { from: start, to: date }); closeCalendar(); trigger.current?.focus()
   }
-  return <div ref={root} className="relative" onKeyDown={e => { if (e.key === "Escape") { setOpen(false); setStart(undefined) } }}>
-    <button id="dates" type="button" aria-haspopup="dialog" aria-expanded={open} aria-label="Fechas a incluir" onClick={() => { if (!open) { setStart(undefined); setOpen(true) } }} className="h-[34px] w-full cursor-pointer border border-[#cbd3dc] bg-[#e9ecef] px-3 text-left text-sm focus:outline-none focus:ring-[3px] focus:ring-[#b3d7ff]">{value ? `${formatDate(value.from)} - ${formatDate(value.to)}` : <span className="text-[#626b76]">Seleccione fechas…</span>}</button>
-    {open && <div role="dialog" aria-label="Seleccionar fechas" className="absolute left-0 top-[40px] z-30 flex w-[486px] max-w-[calc(100vw-64px)] flex-wrap rounded-[3px] border border-[#ddd] bg-white p-[10px] shadow-sm sm:flex-nowrap" style={{ fontFamily: "Arial, sans-serif" }}>
+  return <details ref={root} className="relative min-w-0" onKeyDown={e => { if (e.key === "Escape") { closeCalendar(); trigger.current?.focus() } }}>
+    <summary ref={trigger} id="dates" aria-label="Fechas a incluir" className="flex h-[34px] w-full cursor-pointer list-none items-center justify-between border border-[#cbd3dc] bg-[#e9ecef] px-3 text-left text-sm focus:outline-none focus:ring-[3px] focus:ring-[#b3d7ff] [&::-webkit-details-marker]:hidden"><span>{value ? `${formatDate(value.from)} - ${formatDate(value.to)}` : "Seleccione fechas…"}</span><span aria-hidden="true">▾</span></summary>
+    <div role="dialog" aria-label="Seleccionar fechas" className="absolute left-0 top-[40px] z-50 flex w-[486px] max-w-[calc(100vw-64px)] flex-wrap rounded-[3px] border border-[#ddd] bg-white p-[10px] shadow-sm sm:flex-nowrap" style={{ fontFamily: "Arial, sans-serif" }}>
       {[0, 1].map(offset => {
         const current = new Date(month.getFullYear(), month.getMonth() + offset, 1)
         const first = (current.getDay() + 6) % 7
@@ -34,6 +42,6 @@ export function ReservationCalendar({ value, onChange }: { value?: DateRange; on
           })}</div>
         </div>
       })}
-    </div>}
-  </div>
+    </div>
+  </details>
 }
