@@ -4,5 +4,5 @@ Cristóbal Carrión - 202373598-1
 Para probar MVP,
 Ejecutar en terminal en folder principal:
 
-npm install
+npm install \n
 npm run dev
