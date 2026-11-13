@@ -1,17 +1,22 @@
 import { CalendarDaysIcon, EyeIcon, PinIcon } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { dateKey, formatLongDate, formatShortDate, getMenuForDate, mainDishFor } from "@/lib/menu-data"
+import { MENU_TYPES, dateKey, formatLongDate, formatShortDate, getMenuForDate, mainDishFor } from "@/lib/menu-data"
 
 type Props = {
   date?: Date
   mode: "preview" | "pinned"
   selected: Date[]
   menuType?: string
+  dayMenus?: Record<string, string>
+  onDayMenuChange?: (date: Date, menu: string) => void
 }
 
-export function MenuDetail({ date, mode, selected, menuType }: Props) {
+export function MenuDetail({ date, mode, selected, menuType, dayMenus, onDayMenuChange }: Props) {
   const sorted = [...selected].sort((a, b) => +a - +b)
   const menu = date ? getMenuForDate(date) : undefined
+  const activeKey = date ? dateKey(date) : undefined
+  const isSelected = Boolean(activeKey && selected.some(d => dateKey(d) === activeKey))
+  const effectiveMenuType = (activeKey && dayMenus?.[activeKey]) || menuType
   const rows = menu
     ? [
         { label: "Entrada", value: menu.entrada },
@@ -38,20 +43,38 @@ export function MenuDetail({ date, mode, selected, menuType }: Props) {
       </header>
 
       {menu ? (
-        <dl className="flex-1 divide-y divide-[#eef1f4] px-5">
-          {rows.map(row => {
-            const highlighted = row.type && row.type === menuType
-            return (
-              <div key={row.label} className={`flex flex-col gap-0.5 py-3 ${highlighted ? "-mx-5 border-l-4 border-[#005e90] bg-[#f2f7fb] px-4" : ""}`}>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-[#5b6675]">
-                  {row.label}
-                  {highlighted && <span className="ml-2 normal-case tracking-normal text-[#005e90]">· Tu elección</span>}
-                </dt>
-                <dd className="text-sm font-medium text-[#1f2a37]">{row.value}</dd>
-              </div>
-            )
-          })}
-        </dl>
+        <>
+          {date && isSelected && onDayMenuChange && (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#eef1f4] bg-[#f8fafc] px-5 py-3">
+              <label htmlFor="day-menu-select" className="text-xs font-semibold text-[#003a5d]">
+                Menú específico para este día:
+              </label>
+              <select
+                id="day-menu-select"
+                value={activeKey && dayMenus?.[activeKey] ? dayMenus[activeKey] : ""}
+                onChange={e => onDayMenuChange(date, e.target.value)}
+                className="h-[30px] rounded-[3px] border border-[#cbd3dc] bg-white px-2.5 text-xs text-[#454d59]"
+              >
+                <option value="">{menuType ? `Usar menú general (${menuType})` : "Usar menú general"}</option>
+                {MENU_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+              </select>
+            </div>
+          )}
+          <dl className="flex-1 divide-y divide-[#eef1f4] px-5">
+            {rows.map(row => {
+              const highlighted = row.type && row.type === effectiveMenuType
+              return (
+                <div key={row.label} className={`flex flex-col gap-0.5 py-3 ${highlighted ? "-mx-5 border-l-4 border-[#005e90] bg-[#f2f7fb] px-4" : ""}`}>
+                  <dt className="text-[11px] font-semibold uppercase tracking-wide text-[#5b6675]">
+                    {row.label}
+                    {highlighted && <span className="ml-2 normal-case tracking-normal text-[#005e90]">· Tu elección</span>}
+                  </dt>
+                  <dd className="text-sm font-medium text-[#1f2a37]">{row.value}</dd>
+                </div>
+              )
+            })}
+          </dl>
+        </>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
           <span className="flex size-12 items-center justify-center rounded-full bg-[#e6f0f7] text-[#005e90]">
@@ -69,12 +92,15 @@ export function MenuDetail({ date, mode, selected, menuType }: Props) {
             </AccordionTrigger>
             <AccordionContent>
               <ul className="flex max-h-60 flex-col divide-y divide-[#eef1f4] overflow-y-auto">
-                {sorted.map(d => (
-                  <li key={dateKey(d)} className="flex items-baseline justify-between gap-4 py-2 text-xs">
-                    <span className="shrink-0 font-semibold capitalize text-[#003a5d]">{formatShortDate(d)}</span>
-                    <span className="text-right text-[#404856]">{mainDishFor(getMenuForDate(d), menuType)}</span>
-                  </li>
-                ))}
+                {sorted.map(d => {
+                  const dMenu = dayMenus?.[dateKey(d)] || menuType
+                  return (
+                    <li key={dateKey(d)} className="flex items-baseline justify-between gap-4 py-2 text-xs">
+                      <span className="shrink-0 font-semibold capitalize text-[#003a5d]">{formatShortDate(d)}</span>
+                      <span className="text-right text-[#404856]">{mainDishFor(getMenuForDate(d), dMenu)}</span>
+                    </li>
+                  )
+                })}
               </ul>
             </AccordionContent>
           </AccordionItem>

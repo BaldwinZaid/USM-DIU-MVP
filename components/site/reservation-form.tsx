@@ -6,13 +6,22 @@ import { MenuDetail } from "./menu-detail"
 import { InformationDialog } from "./information-dialog"
 import { MENU_TYPES, dateKey } from "@/lib/menu-data"
 
-export type DemoReservation = { id: string; registered: string; campus: string; menu: string; dates: Date[]; notes?: string }
+export type DemoReservation = {
+  id: string
+  registered: string
+  campus: string
+  menu: string
+  dates: Date[]
+  notes?: string
+  dayOverrides?: Record<string, { menu: string; notes?: string }>
+}
 
 export function ReservationForm({ onReserve }: { onReserve: (reservation: DemoReservation) => void }) {
   const [dates, setDates] = useState<Date[]>([])
   const [pinned, setPinned] = useState<Date>()
   const [hovered, setHovered] = useState<Date>()
   const [menuType, setMenuType] = useState("")
+  const [dayMenus, setDayMenus] = useState<Record<string, string>>({})
   const [error, setError] = useState("")
   const [help, setHelp] = useState(true)
   const [notice, setNotice] = useState(false)
@@ -26,6 +35,7 @@ export function ReservationForm({ onReserve }: { onReserve: (reservation: DemoRe
   function updateDates(next: Date[]) {
     setDates(next)
     if (next.length) setError("")
+    else setDayMenus({})
   }
 
   return (
@@ -35,12 +45,19 @@ export function ReservationForm({ onReserve }: { onReserve: (reservation: DemoRe
           e.preventDefault()
           if (!dates.length) { setError("Seleccione al menos un día en el calendario."); return }
           const data = new FormData(e.currentTarget)
+          const dayOverrides = Object.fromEntries(
+            dates
+              .map(d => [dateKey(d), dayMenus[dateKey(d)]] as const)
+              .filter(([, m]) => Boolean(m && m !== menuType))
+              .map(([k, m]) => [k, { menu: m! }])
+          )
           onReserve({
             id: crypto.randomUUID(),
             registered: new Date().toLocaleString("es-CL"),
             campus: String(data.get("campus")),
             menu: menuType,
             dates: [...dates].sort((a, b) => +a - +b),
+            dayOverrides: Object.keys(dayOverrides).length ? dayOverrides : undefined,
           })
           setError("")
           setNotice(true)
@@ -71,12 +88,28 @@ export function ReservationForm({ onReserve }: { onReserve: (reservation: DemoRe
             onDayClick={date => setPinned(date)}
             onPreview={setHovered}
           />
-          <MenuDetail date={activeDate} mode={hovered ? "preview" : "pinned"} selected={dates} menuType={menuType} />
+          <MenuDetail
+            date={activeDate}
+            mode={hovered ? "preview" : "pinned"}
+            selected={dates}
+            menuType={menuType}
+            dayMenus={dayMenus}
+            onDayMenuChange={(date, menu) => {
+              const key = dateKey(date)
+              setDayMenus(prev => {
+                if (!menu || menu === menuType) {
+                  const { [key]: _, ...rest } = prev
+                  return rest
+                }
+                return { ...prev, [key]: menu }
+              })
+            }}
+          />
         </div>
 
         <div className="mt-8 text-center"><button type="submit" className="rounded-[3px] bg-[#005087] px-5 py-2 font-medium text-white hover:bg-[#003e69]">Ingresar reserva</button></div>
         {error && <p role="alert" className="mt-4 text-center text-red-700">{error}</p>}
-        {notice && <InformationDialog message="Se ha registrado correctamente la reserva" onClose={() => { setNotice(false); setDates([]); setPinned(undefined) }} />}
+        {notice && <InformationDialog message="Se ha registrado correctamente la reserva" onClose={() => { setNotice(false); setDates([]); setPinned(undefined); setDayMenus({}) }} />}
       </form>
     </section>
   )
