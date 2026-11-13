@@ -5,18 +5,21 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { MENU_TYPES } from "@/lib/menu-data"
+import { MENU_TYPES, dateKey } from "@/lib/menu-data"
+import { formatDate } from "./reservation-calendar"
 import type { DemoReservation } from "./reservation-form"
 
 type Props = {
   reservation: DemoReservation
+  date: Date
   onClose: () => void
-  onSave: (changes: Pick<DemoReservation, "menu" | "notes">) => void
+  onSave: (changes: { menu: string; notes?: string }) => void
 }
 
-export function EditReservationDialog({ reservation, onClose, onSave }: Props) {
-  const [menu, setMenu] = useState(reservation.menu)
-  const [notes, setNotes] = useState(reservation.notes ?? "")
+export function EditReservationDialog({ reservation, date, onClose, onSave }: Props) {
+  const override = reservation.dayOverrides?.[dateKey(date)]
+  const [menu, setMenu] = useState(override?.menu ?? reservation.menu)
+  const [notes, setNotes] = useState(override?.notes ?? reservation.notes ?? "")
 
   return (
     <Dialog open onOpenChange={open => { if (!open) onClose() }}>
@@ -24,7 +27,7 @@ export function EditReservationDialog({ reservation, onClose, onSave }: Props) {
         <DialogHeader>
           <DialogTitle className="text-[#003a5d]">Editar reserva</DialogTitle>
           <DialogDescription>
-            {`Código ${reservation.id.slice(0, 6).toUpperCase()} · ${reservation.dates.length} ${reservation.dates.length === 1 ? "día" : "días"}`}
+            {`Código ${reservation.id.slice(0, 6).toUpperCase()} · ${formatDate(date)}`}
           </DialogDescription>
         </DialogHeader>
         <form

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { minutaLinks } from "@/lib/site-data"
+import { dateKey } from "@/lib/menu-data"
 import { ReservationForm, type DemoReservation } from "./reservation-form"
 import { ReservationHistory } from "./reservation-history"
 
@@ -18,7 +19,7 @@ export function CasinoPreview() {
       <nav aria-label="Secciones del casino" className="flex border-b border-[#d9dfe7] text-sm text-[#0066a3]">{[["reserve", "Reserva de menú"], ["reservations", "Mis reservas"], ["consumption", "Mis consumos"]].map(([key,label]) => <button key={key} type="button" aria-current={tab === key ? "page" : undefined} onClick={() => setTab(key)} className={`-mb-px rounded-t-[3px] border px-[14px] py-2 ${tab === key ? "border-[#d9dfe7] border-b-white bg-white text-[#404856]" : "border-transparent hover:bg-[#f7f7f7]"}`}>{label}</button>)}</nav>
       {tab === "welcome" && <div className="mx-4 mt-[42px] rounded-[3px] border border-[#ddd] bg-[#f7f7f7] px-4 py-[14px] text-center text-xs text-[#404856] shadow-[0_1px_0_#ddd] sm:mx-[42px]">Bienvenidos al Sistema de Casino de Alimentación USM</div>}
       {tab === "reserve" && <ReservationForm onReserve={reservation => setReservations(previous => [reservation, ...previous])} />}
-      {tab === "reservations" && <ReservationHistory reservations={reservations} onCancel={id => setReservations(previous => previous.filter(row => row.id !== id))} onUpdate={(id, changes) => setReservations(previous => previous.map(row => row.id === id ? { ...row, ...changes } : row))} />}
+      {tab === "reservations" && <ReservationHistory reservations={reservations} onCancel={id => setReservations(previous => previous.filter(row => row.id !== id))} onUpdate={(id, date, changes) => setReservations(previous => previous.map(row => row.id === id ? { ...row, dayOverrides: { ...row.dayOverrides, [dateKey(date)]: changes } } : row))} />}
       {tab === "consumption" && <ReservationHistory consumption />}
     </main>
     <footer className="bg-[#191919] py-4 text-[11px] text-white"><div className="container-usm flex flex-wrap justify-between gap-2"><p>Sitio web administrado por <strong>Dirección General de Sistemas de Gestión</strong></p><p className="text-[#bbb]">Maqueta académica · Reservas simuladas, se borran al recargar · Sin conexión a USM</p></div></footer>
